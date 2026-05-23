@@ -1,3 +1,4 @@
+import './global.less';
 import { LinkOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
@@ -28,35 +29,35 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
-  const fetchUserInfo = async () => {
-    try {
-      const msg = await queryCurrentUser({
-        skipErrorHandler: true,
-      });
-      return msg.data;
-    } catch (_error) {
-      history.push(loginPath);
-    }
-    return undefined;
-  };
-  // 如果不是登录页面，执行
-  const { location } = history;
-  if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
-      location.pathname,
-    )
-  ) {
-    const currentUser = await fetchUserInfo();
-    return {
-      fetchUserInfo,
-      currentUser,
-      settings: defaultSettings as Partial<LayoutSettings>,
-    };
-  }
-  return {
-    fetchUserInfo,
-    settings: defaultSettings as Partial<LayoutSettings>,
-  };
+  // const fetchUserInfo = async () => {
+  //   try {
+  //     const msg = await queryCurrentUser({
+  //       skipErrorHandler: true,
+  //     });
+  //     return msg.data;
+  //   } catch (_error) {
+  //     history.push(loginPath);
+  //   }
+  //   return undefined;
+  // };
+  // // 如果不是登录页面，执行
+  // const { location } = history;
+  // if (
+  //   ![loginPath, '/user/register', '/user/register-result'].includes(
+  //     location.pathname,
+  //   )
+  // ) {
+  //   const currentUser = await fetchUserInfo();
+  //   return {
+  //     fetchUserInfo,
+  //     currentUser,
+  //     settings: defaultSettings as Partial<LayoutSettings>,
+  //   };
+  // }
+  // return {
+  //   fetchUserInfo,
+  //   settings: defaultSettings as Partial<LayoutSettings>,
+  // };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
@@ -65,9 +66,10 @@ export const layout: RunTimeLayoutConfig = ({
   setInitialState,
 }) => {
   return {
+    // logo:'../dist/logo.png',
     actionsRender: () => [
-      <Question key="doc" />,
-      <SelectLang key="SelectLang" />,
+      // <Question key="doc" />,
+      // <SelectLang key="SelectLang" />,
     ],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
@@ -81,11 +83,11 @@ export const layout: RunTimeLayoutConfig = ({
     },
     footerRender: () => <Footer />,
     onPageChange: () => {
-      const { location } = history;
-      // 如果没有登录，重定向到 login
-      if (!initialState?.currentUser && location.pathname !== loginPath) {
-        history.push(loginPath);
-      }
+      // const { location } = history;
+      // // 如果没有登录，重定向到 login
+      // if (!initialState?.currentUser && location.pathname !== loginPath) {
+      //   history.push(loginPath);
+      // }
     },
     bgLayoutImgList: [
       {
@@ -107,24 +109,34 @@ export const layout: RunTimeLayoutConfig = ({
         width: '331px',
       },
     ],
-    links: isDevOrTest
-      ? [
-          <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
-            <LinkOutlined />
-            <span>OpenAPI 文档</span>
-          </Link>,
-        ]
-      : [],
+    // links: isDevOrTest
+    //   ? [
+    //       <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
+    //         <LinkOutlined />
+    //         <span>OpenAPI 文档</span>
+    //       </Link>,
+    //     ]
+    //   : [],
     menuHeaderRender: undefined,
+    menuRender: false,
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
     // 增加一个 loading 的状态
     childrenRender: (children) => {
       // if (initialState?.loading) return <PageLoading />;
       return (
-        <>
+        <div
+          style={{
+            backgroundImage: 'url(/img/bj.png)',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
+            minHeight: '100vh', // 至少占满视口高度
+            width: '100%', // 占满宽度
+          }}
+        >
           {children}
-          {isDevOrTest && (
+          {/* {isDevOrTest && (
             <SettingDrawer
               disableUrlParams
               enableDarkTheme
@@ -136,8 +148,8 @@ export const layout: RunTimeLayoutConfig = ({
                 }));
               }}
             />
-          )}
-        </>
+          )} */}
+        </div>
       );
     },
     ...initialState?.settings,
