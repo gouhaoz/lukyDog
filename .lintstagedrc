@@ -1,5 +1,6 @@
 {
-  "**/*.{js,jsx,tsx,ts,md,css,less,json}": [
-    "npx @biomejs/biome check --write"
-  ]
+  "*.{md,json}": ["prettier --cache --write"],
+  "*.{js,jsx}": ["prettier --cache --write"],
+  "*.{css,less}": ["prettier --cache --write"],
+  "*.ts?(x)": ["prettier --cache --write"]
 }

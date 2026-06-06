@@ -1,0 +1,37 @@
+.guideCarousel {
+  :global {
+    // .slick-list{
+    //   height: 300px;
+    // }
+    .slick-dots {
+      // display: block !important;
+      bottom: 0;
+      min-height: 30px;
+      margin-top: 30px;
+      li {
+        width: 30px;
+        button {
+          background: rgb(0, 0, 0);
+          // height: 8px;
+          border-radius: 50px;
+        }
+      }
+      li.slick-active::after {
+        background: #1890ff !important;
+        border-radius: 50px;
+      }
+    }
+  }
+
+  .imgList {
+    height: 400px;
+    // overflow: hidden;
+    overflow-y: auto;
+    .tutorial {
+      float: left;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 10px;
+    }
+  }
+}

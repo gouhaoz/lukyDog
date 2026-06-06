@@ -1,37 +1,15 @@
-// import { GithubOutlined } from '@ant-design/icons';
-// import { DefaultFooter } from '@ant-design/pro-components';
-// import React from 'react';
+import { DefaultFooter } from "@ant-design/pro-components";
+import React from "react";
 
-// const Footer: React.FC = () => {
-//   return (
-//     // <DefaultFooter
-//     //   style={{
-//     //     background: 'none',
-//     //   }}
-//     //   copyright="Powered by Ant Desgin"
-//     //   links={[
-//     //     {
-//     //       key: 'Ant Design Pro',
-//     //       title: 'Luky dog',
-//     //       // href: 'https://pro.ant.design',
-//     //       href: '/',
-//     //       blankTarget: true,
-//     //     },
-//     //     // {
-//     //     //   key: 'github',
-//     //     //   title: <GithubOutlined />,
-//     //     //   href: 'https://github.com/ant-design/ant-design-pro',
-//     //     //   blankTarget: true,
-//     //     // },
-//     //     // {
-//     //     //   key: 'Ant Design',
-//     //     //   title: 'Ant Design',
-//     //     //   href: 'https://ant.design',
-//     //     //   blankTarget: true,
-//     //     // },
-//     //   ]}
-//     // />
-//   );
-// };
+const Footer: React.FC = () => {
+  return (
+    <DefaultFooter
+      style={{
+        background: "none",
+      }}
+      copyright="Powered by Luky Dog"
+    />
+  );
+};
 
-// export default Footer;
+export default Footer;
