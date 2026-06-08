@@ -1,8 +1,26 @@
 import { AvatarDropdown, AvatarName, Footer } from "@/components";
 import type { Settings as LayoutSettings } from "@ant-design/pro-components";
 import type { RequestConfig, RunTimeLayoutConfig } from "@umijs/max";
+import bjImg from "./assets/bj.png";
 import "./global.less";
 import { errorConfig } from "./requestErrorConfig";
+
+document.addEventListener("dragover", (e) => {
+  e.preventDefault();
+});
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+});
+
+// 设置背景图片 CSS 变量
+if (typeof document !== "undefined") {
+  document.documentElement.style.setProperty("--bg-image-url", `url(${bjImg})`);
+  console.log("✅ 背景图片 CSS 变量已设置:", bjImg);
+}
+
+// 调试：检查 React 是否能正常运行
+console.log("✅ app.tsx 加载成功");
+console.log("✅ process.env.NODE_ENV:", process.env.NODE_ENV);
 
 const isDev = process.env.NODE_ENV === "development";
 const isDevOrTest = isDev || process.env.CI;
@@ -17,35 +35,22 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
-  // const fetchUserInfo = async () => {
-  //   try {
-  //     const msg = await queryCurrentUser({
-  //       skipErrorHandler: true,
-  //     });
-  //     return msg.data;
-  //   } catch (_error) {
-  //     history.push(loginPath);
-  //   }
-  //   return undefined;
-  // };
-  // // 如果不是登录页面，执行
-  // const { location } = history;
-  // if (
-  //   ![loginPath, '/user/register', '/user/register-result'].includes(
-  //     location.pathname,
-  //   )
-  // ) {
-  //   const currentUser = await fetchUserInfo();
-  //   return {
-  //     fetchUserInfo,
-  //     currentUser,
-  //     settings: defaultSettings as Partial<LayoutSettings>,
-  //   };
-  // }
-  // return {
-  //   fetchUserInfo,
-  //   settings: defaultSettings as Partial<LayoutSettings>,
-  // };
+  return {
+    settings: {
+      navTheme: "light",
+      layout: "mix",
+      contentWidth: "Fluid",
+      fixedHeader: false,
+      fixSiderbar: true,
+      colorWeak: false,
+      menu: {
+        locale: true,
+      },
+      title: "Luky Dog",
+      pwa: false,
+      iconfontUrl: "",
+    },
+  };
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
@@ -115,12 +120,12 @@ export const layout: RunTimeLayoutConfig = ({
       return (
         <div
           style={{
-            backgroundImage: "url(./img/bj.png)",
+            backgroundImage: `url(${bjImg})`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundAttachment: "fixed",
-            minHeight: "100vh", // 至少占满视口高度
-            width: "100%", // 占满宽度
+            minHeight: "100vh",
+            width: "100%",
           }}
         >
           {children}

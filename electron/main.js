@@ -14,19 +14,28 @@ const fs = require("node:fs");
 require("./services/handleData.js");
 require("./services/rand.js");
 
-console.log("\u001b[?1004l");
+console.log("\u001B[?1004l");
 
-const dataDir = path.join(__dirname, "../data");
+// 根据环境获取数据目录
+const isPackaged = app.isPackaged;
+const dataDir = isPackaged
+  ? path.join(app.getPath("userData"), "data") // 生产环境：用户数据目录
+  : path.join(__dirname, "../data"); // 开发环境：项目目录
+
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
-  console.log("✅ 创建数据目录成功");
+  console.log("✅ 创建数据目录成功:", dataDir);
 }
 
-const createWindow = () => {
+const createWindow = async () => {
+  const isPackaged = app.isPackaged;
+
   const win = new BrowserWindow({
     width: 1600,
     height: 900,
-    icon: "public/logo.svg",
+    icon: isPackaged
+      ? path.join(process.resourcesPath, "public/logo.svg")
+      : path.join(__dirname, "../public/logo.svg"),
     webPreferences: {
       preload: path.join(__dirname, "rendererProcess.js"),
       contextIsolation: true,
@@ -34,12 +43,34 @@ const createWindow = () => {
     },
   });
 
-  win.loadURL("http://localhost:8000");
+  // 加载对应的 URL 或文件
+  if (isPackaged) {
+    // 打包后加载静态文件
+    // 使用 app.getAppPath() 获取应用根目录（在 asar 包内时就是 asar 的根目录）
+    const appPath = app.getAppPath();
+    console.log("🔍 app.getAppPath():", appPath);
+    console.log("🔍 app.isPackaged:", app.isPackaged);
 
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: "deny" };
-  });
+    // 在 asar 包中，appPath 指向 asar 根目录，所以直接 join("dist", "index.html")
+    const indexPath = path.join(appPath, "dist", "index.html");
+    console.log("🔍 index.html 路径:", indexPath);
+
+    // 检查文件是否存在
+    if (fs.existsSync(indexPath)) {
+      console.log("✅ index.html 存在");
+    } else {
+      console.error("❌ index.html 不存在!");
+    }
+
+    const indexUrl = `file:///${indexPath.replace(/\\/g, "/")}`;
+    console.log("🔍 index.html URL:", indexUrl);
+
+    await win.loadURL(indexUrl);
+    console.log("✅ 页面加载完成");
+  } else {
+    // 开发环境加载本地服务器
+    win.loadURL("http://localhost:8000");
+  }
 
   const getOrigin = (urlStr) => {
     try {
@@ -55,7 +86,6 @@ const createWindow = () => {
     const targetOrigin = getOrigin(url);
     if (targetOrigin && currentOrigin !== targetOrigin) {
       shell.openExternal(url);
-    } else {
     }
     return { action: "deny" };
   });

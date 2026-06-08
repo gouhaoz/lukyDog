@@ -1,15 +1,41 @@
 const initSqlJs = require("sql.js");
 const path = require("path");
 const fs = require("fs");
+const { app } = require("electron");
 
 let db = null;
 
+// 获取数据目录（开发环境使用项目目录，生产环境使用用户数据目录）
+const getUserDataDir = () => {
+  if (app.isPackaged) {
+    // 生产环境：使用用户数据目录
+    return path.join(app.getPath("userData"), "data");
+  } else {
+    // 开发环境：使用项目根目录下的 data 文件夹
+    return path.join(__dirname, "../../data");
+  }
+};
+
 async function initDatabase() {
   try {
-    const wasmPath = path.join(
-      __dirname,
-      "../../node_modules/sql.js/dist/sql-wasm.wasm"
-    );
+    const isPackaged = app.isPackaged;
+    let wasmPath;
+
+    if (isPackaged) {
+      // 打包后，wasm 文件在 asar 包内
+      wasmPath = path.join(
+        __dirname,
+        "../../node_modules/sql.js/dist/sql-wasm.wasm"
+      );
+    } else {
+      // 开发环境
+      wasmPath = path.join(
+        __dirname,
+        "../../node_modules/sql.js/dist/sql-wasm.wasm"
+      );
+    }
+
+    console.log("🔍 wasm 文件路径:", wasmPath);
 
     if (!fs.existsSync(wasmPath)) {
       console.error("❌ wasm 文件不存在:", wasmPath);
@@ -17,7 +43,9 @@ async function initDatabase() {
     }
 
     const SQL = await initSqlJs({
-      locateFile: () => wasmPath,
+      locateFile: (filename) => {
+        return path.join(path.dirname(wasmPath), filename);
+      },
     });
     db = new SQL.Database();
     createTables();
@@ -93,9 +121,9 @@ async function saveDataToDB(sheetData, blockList, settings = {}) {
     console.log("✅ 数据保存成功");
 
     const data = db.export();
-    const dbPath = path.join(__dirname, "../../data/database.sqlite");
+    const dataDir = getUserDataDir();
+    const dbPath = path.join(dataDir, "database.sqlite");
 
-    const dataDir = path.dirname(dbPath);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
@@ -110,14 +138,15 @@ async function saveDataToDB(sheetData, blockList, settings = {}) {
 
 async function loadDataFromDB() {
   try {
-    const dbPath = path.join(__dirname, "../../data/database.sqlite");
+    const dataDir = getUserDataDir();
+    const dbPath = path.join(dataDir, "database.sqlite");
     const wasmPath = path.join(
       __dirname,
       "../../node_modules/sql.js/dist/sql-wasm.wasm"
     );
 
     if (!fs.existsSync(dbPath)) {
-      console.log("⚠️ 数据库文件不存在，返回空数据");
+      console.log("⚠️ 数据库文件不存在，返回空数据:", dbPath);
       return {
         data: [],
         blockList: [],
@@ -128,10 +157,12 @@ async function loadDataFromDB() {
 
     const fileBuffer = fs.readFileSync(dbPath);
     const SQL = await initSqlJs({
-      locateFile: () => wasmPath,
+      locateFile: (filename) => {
+        return path.join(path.dirname(wasmPath), filename);
+      },
     });
     db = new SQL.Database(new Uint8Array(fileBuffer));
-    console.log("✅ 从文件加载数据库成功");
+    console.log("✅ 从文件加载数据库成功:", dbPath);
 
     createTables();
 
