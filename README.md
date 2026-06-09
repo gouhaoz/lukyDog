@@ -3,9 +3,7 @@
 
 # LukyDog(1.0Pro)抽奖程序
 
-这是一个基于 Electron + React（antd） 框架的 xlsx 表格抽奖程序，只适用于在 Windows 系统上进行抽奖活动。
-<br/>
-<img src="./src/pages/Welcome/assets/product_bj.png" alt="主题" style="border-radius: 10px;margin-top:10px" width="700">
+这是一个基于 Electron + React（antd） 框架的 xlsx 表格抽奖程序；只适用于在 Windows 系统上进行抽奖活动。
 
 ## 安装包下载
 
