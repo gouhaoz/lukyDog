@@ -42,17 +42,22 @@ const Welcome: React.FC = () => {
 
   const { initialState, setInitialState } = useModel("@@initialState");
   const [ruleList, setRuleList] = useState<any[]>([]);
-  const [excelData, setExcelData] = useState<any[]>([]);
   const [xlsxList, setXlsxList] = useState<any[]>([]);
   const [isLowChance, setIsLowChance] = useState<boolean>(false);
   const [cardSelected, setCardSelected] = useState<number[]>([]);
 
-  const [poolData, setPoolData] = useState<any[]>([]);
-
   // 抽奖数量
   const [randNumber, setRandNumber] = useState<number>(0);
-  const { fromData, setFromData, fromNames } = useModel("global") as any;
-
+  const [isDraw, setIsDraw] = useState<boolean>(false);
+  const {
+    fromData,
+    setFromData,
+    fromNames,
+    excelData,
+    setExcelData,
+    poolData,
+    setPoolData,
+  } = useModel("global") as any;
   //弹窗状态
   const [modalStatus, setModalStatus] = useState({
     Excel: false,
@@ -70,10 +75,6 @@ const Welcome: React.FC = () => {
   };
 
   useEffect(() => {
-    // 只在 xlsxList 为空时才初始化，避免覆盖用户选择
-    // if (xlsxList.length === 0 && fromNames.length > 0) {
-    //   setXlsxList(fromNames)
-    // }
     setXlsxList(fromNames);
   }, [fromNames]);
 
@@ -124,6 +125,7 @@ const Welcome: React.FC = () => {
     {
       title: "列表名",
       dataIndex: "value",
+      width: "25%",
       ...ColumnSearchProps("value"),
     },
     {
@@ -195,7 +197,6 @@ const Welcome: React.FC = () => {
   // 开始抽奖
   const startDraw = async () => {
     // excelData randNumber isLowChance
-    console.log("抽奖数量：", randNumber);
 
     try {
       if (excelData.length <= 0) {
@@ -206,6 +207,8 @@ const Welcome: React.FC = () => {
         message.warning("请先设置抽奖数量！");
         return;
       }
+
+      setIsDraw(true);
       const nameList = excelData.map((item) => item.value);
       const resData = await window.electronAPI.randData(nameList, randNumber);
       console.log(
@@ -217,18 +220,25 @@ const Welcome: React.FC = () => {
         isLowChance
       );
 
+      // 制作抽奖动画
       const time = 1000 / resData.length;
-      let index = 0;
-      setPoolData([resData[index]]);
-      index++;
+
+      setPoolData([resData[0]]);
       const Timing = setInterval(() => {
-        if (index >= resData.length) {
-          clearInterval(Timing);
-          return;
-        }
-        setPoolData((pre) => [...pre, resData[index]]);
-        index++;
+        setPoolData((pre) => {
+          const nextIndex = pre.length;
+          if (nextIndex >= resData.length) {
+            clearInterval(Timing);
+            return pre;
+          }
+          return [...pre, resData[nextIndex]];
+        });
       }, time);
+      console.log("抽取数据：", poolData);
+
+      setTimeout(() => {
+        setIsDraw(false);
+      }, 1000);
     } catch (err) {
       message.error("抽奖失败！出现错误：", err);
       return;
@@ -236,11 +246,16 @@ const Welcome: React.FC = () => {
   };
 
   const onDataConfirm = async () => {
-    // const selectList = uniq(cardSelected)
-    const selectItemList = cardSelected.map((item) => poolData[item]);
-    await window.electronAPI.confirmData(selectItemList);
-    setPoolData([]);
-    setCardSelected([]);
+    try {
+      // const selectList = uniq(cardSelected)
+      const selectItemList = cardSelected.map((item) => poolData[item]);
+      await window.electronAPI.confirmData(selectItemList);
+      setPoolData([]);
+      setCardSelected([]);
+    } catch (err) {
+      message.error("计算出现错误：", err);
+      return;
+    }
   };
 
   // 自定义配置
@@ -394,7 +409,7 @@ const Welcome: React.FC = () => {
                         src="./icons/logo.png"
                       ></Image>
                       <div className={style.headerTitle}>
-                        <h3>Luky Dog(幸运小狗)</h3>
+                        <h3>Lucky Dog(幸运小狗)</h3>
                         <span>开箱即用的抽奖程序！</span>
                       </div>
                     </div>
@@ -537,7 +552,12 @@ const Welcome: React.FC = () => {
             <br></br>
             <div className={style.buttonGroup}>
               {poolData.length > 0 ? (
-                <Button type="primary" onClick={onDataConfirm}>
+                <Button
+                  disabled={isDraw}
+                  className={isDraw ? style.disabled_confirm : ""}
+                  type="primary"
+                  onClick={onDataConfirm}
+                >
                   确定结果
                 </Button>
               ) : (

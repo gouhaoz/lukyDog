@@ -68,7 +68,8 @@ ipcMain.handle("confirm:data", async (event, winnerList) => {
       );
       if (index !== -1) {
         const newValue = item.interimScore ? Number(item.interimScore) : 0;
-        SheetBase.state.data[i].data[index].point += newValue;
+        const oldPoint = Number(SheetBase.state.data[i].data[index].point);
+        SheetBase.state.data[i].data[index].point = oldPoint + newValue;
       }
     }
   }

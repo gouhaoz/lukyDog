@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 
 const useUser = () => {
   const [fromData, setFromData] = useState<any[]>([]);
+  const [excelData, setExcelData] = useState<any[]>([]);
+  const [poolData, setPoolData] = useState<any[]>([]);
 
   const fromNames = useMemo(() => {
     const list = fromData.map((item) => {
@@ -22,6 +24,10 @@ const useUser = () => {
     fromData,
     setFromData,
     fromNames,
+    excelData,
+    setExcelData,
+    poolData,
+    setPoolData,
   };
 };
 

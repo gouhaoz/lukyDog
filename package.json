@@ -91,7 +91,7 @@
   },
   "build": {
     "appId": "com.antdesign.pro.app",
-    "productName": "LukyDog(1.0Pro)",
+    "productName": "Lucky Dog(1.0Pro)",
     "directories": {
       "output": "electron-dist"
     },
