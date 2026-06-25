@@ -6,7 +6,7 @@
 
 ## 安装包下载
 
-- [Windows 最新版本（点击下载）](https://github.com/gouhaoz/lukyDog/releases/download/1.0.0/LukyDog.1.0Pro.Setup.6.0.0.exe.zip)
+- [Windows 最新版本（点击下载）](https://github.com/gouhaoz/lukyDog/releases/download/1.0.0/Lucky.Dog.1.0Pro.Setup.6.0.0.zip)
 - [查看程序使用指南](https://github.com/gouhaoz/lukyDog/blob/master/USER_GUIDE.md)
 
 ## 主要功能
