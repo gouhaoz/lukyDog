@@ -46,7 +46,7 @@ export async function getInitialState(): Promise<{
       menu: {
         locale: true,
       },
-      title: "Luky Dog",
+      title: "Lucky Dog",
       pwa: false,
       iconfontUrl: "",
     },
@@ -102,14 +102,6 @@ export const layout: RunTimeLayoutConfig = ({
         width: "331px",
       },
     ],
-    // links: isDevOrTest
-    //   ? [
-    //       <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
-    //         <LinkOutlined />
-    //         <span>OpenAPI 文档</span>
-    //       </Link>,
-    //     ]
-    //   : [],
     menuHeaderRender: undefined,
     menuRender: false,
     // 自定义 403 页面
@@ -117,33 +109,7 @@ export const layout: RunTimeLayoutConfig = ({
     // 增加一个 loading 的状态
     childrenRender: (children) => {
       // if (initialState?.loading) return <PageLoading />;
-      return (
-        <div
-          style={{
-            backgroundImage: `url(${bjImg})`,
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
-            backgroundAttachment: "fixed",
-            minHeight: "100vh",
-            width: "100%",
-          }}
-        >
-          {children}
-          {/* {isDevOrTest && (
-            <SettingDrawer
-              disableUrlParams
-              enableDarkTheme
-              settings={initialState?.settings}
-              onSettingChange={(settings) => {
-                setInitialState((preInitialState) => ({
-                  ...preInitialState,
-                  settings,
-                }));
-              }}
-            />
-          )} */}
-        </div>
-      );
+      return <div>{children}</div>;
     },
     ...initialState?.settings,
   };

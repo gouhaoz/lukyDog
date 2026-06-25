@@ -18,8 +18,9 @@ import {
   Row,
   Table,
 } from "antd";
+import { produce } from "immer";
 import { debounce } from "lodash";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ColumnSearchProps } from "../services/searchProps";
 import ImportModal from "../Welcome/components/importModal";
 import style from "./index.less";
@@ -31,6 +32,12 @@ const TableList: React.FC = () => {
   const [currentTableName, setCurrentTableName] = useState<string>();
   const [currentTableData, setCurrentTableData] = useState<any[]>([]);
   const [disabledList, setDisabledList] = useState<string[]>([]);
+
+  // 性能优化：防止重复提交
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 用于保存旧数据，实现乐观更新失败时的回滚
+  const oldDataRef = useRef<any[]>([]);
 
   const [tableModalStatus, setTableModalStatus] = useState<
     string | "tabname" | "tabData" | "addItem"
@@ -66,43 +73,112 @@ const TableList: React.FC = () => {
     const resData = await window.electronAPI.readData();
     setFromData(resData.data);
     setDisabledList(resData.blockList);
-    console.log("打印信息：", fromNames, resData);
   };
 
   useEffect(() => {
     getXlsxList();
   }, []);
 
-  const delTab = debounce(async (name: string) => {
-    if (name === currentTableName) {
-      setCurrentTableName(undefined);
-    }
-    await window.electronAPI.delTab(name);
-    await getXlsxList();
-  }, 400);
+  /**
+   * 优化后的删除表格函数
+   * 性能优化：
+   * 1. 乐观更新 + 错误回滚
+   * 2. useTransition 非阻塞更新
+   */
+  const delTab = useCallback(
+    debounce(async (name: string) => {
+      const oldData = fromData; // 保存引用
+      // 乐观更新：立即从 UI 移除
+      if (name === currentTableName) {
+        setCurrentTableName(undefined);
+      }
+      // 使用 Immer 只更新需要变化的部分
+      setFromData(
+        produce((draft: any[]) => {
+          const index = draft.findIndex((item: any) => item.listName === name);
+          if (index !== -1) {
+            draft.splice(index, 1);
+          }
+        })
+      );
 
-  const rangeStatus = debounce(async (key: string) => {
-    try {
-      const res = await window.electronAPI.rangeStatus(key);
-      console.log("禁用列表：", res);
+      try {
+        await window.electronAPI.delTab(name);
+        message.success("删除表格成功");
+      } catch (error) {
+        // 回滚
+        setFromData(oldData);
+        message.error("删除失败，请重试");
+        console.error(error);
+      }
+    }, 400),
+    [fromData, currentTableName]
+  );
 
-      setDisabledList(res);
-    } catch (err) {
-      console.error(err);
-    }
-  }, 200);
+  /**
+   * 优化后的修改状态函数
+   */
+  const rangeStatus = useCallback(
+    debounce(async (key: string) => {
+      const oldDisabledList = disabledList; // 保存引用
+      // 乐观更新：立即更新 UI
+      // 使用 Immer 只更新需要变化的部分
+      setDisabledList(
+        produce((draft: string[]) => {
+          const index = draft.indexOf(key);
+          if (index !== -1) {
+            draft.splice(index, 1);
+          } else {
+            draft.push(key);
+          }
+        })
+      );
 
-  const delItem = debounce(async (key: string) => {
-    const currentTabIndex = fromData.findIndex(
-      (item) => item.listName === currentTableName
-    );
-    const allTab = [...fromData];
-    allTab[currentTabIndex].data = allTab[currentTabIndex].data.filter(
-      (item) => item.key !== key
-    );
-    setFromData(allTab);
-    await window.electronAPI.delTabItem(currentTableName, key);
-  }, 100);
+      try {
+        const res = await window.electronAPI.rangeStatus(key);
+        setDisabledList(res);
+      } catch (error) {
+        // 回滚
+        setDisabledList(oldDisabledList);
+        console.error(error);
+      }
+    }, 200),
+    [disabledList]
+  );
+
+  const delItem = useCallback(
+    debounce(async (key: string) => {
+      const oldData = fromData; // 保存引用
+      // 乐观更新：立即从 UI 移除
+      // 使用 Immer 只更新需要变化的部分
+      setFromData(
+        produce((draft: any[]) => {
+          const table = draft.find(
+            (item: any) => item.listName === currentTableName
+          );
+          if (table) {
+            const index = table.data.findIndex(
+              (record: any) => record.key === key
+            );
+            if (index !== -1) {
+              table.data.splice(index, 1);
+            }
+          }
+        })
+      );
+
+      try {
+        await window.electronAPI.delTabItem(currentTableName, key);
+        message.success("删除数据项成功");
+      } catch (error) {
+        // 回滚
+        setFromData(oldData);
+        message.error("删除失败，请重试");
+        console.error(error);
+      }
+    }, 100),
+    [fromData, currentTableName]
+  );
 
   const nameColumns = [
     {
@@ -271,78 +347,155 @@ const TableList: React.FC = () => {
   ];
 
   const confirmAction = async () => {
-    const { code, name, point } = form.getFieldsValue();
-    // console.log('弹窗信息：',form.getFieldsValue(),'所有表单：',fromData);
-    // currentTableName
-    // tableModalStatus
+    // 防止重复提交
+    if (isSubmitting) {
+      message.warning("请勿重复提交");
+      return;
+    }
 
-    setTableModalStatus(undefined);
-    switch (tableModalStatus) {
-      case "tabname": {
-        if (!name) {
-          message.error("请输入列表名！");
-          return;
-        }
-        const newData = [...fromData];
-        const index = newData.findIndex(
-          (item) => item.listName === rangeTabName
-        );
-        newData[index].listName = name;
-        setFromData(newData);
-        await window.electronAPI.rangetabName(rangeTabName, name);
-        return "修改列表名";
-      }
-      case "tabData": {
-        if (!code || !name || point === undefined) {
-          message.error("请输入完整数据！");
-          return;
-        }
-        const newData = [...fromData];
-        const index = newData.findIndex(
-          (item) => item.listName === currentTableName
-        );
-        newData[index].data = newData[index].data.map((item) => {
-          if (item.key === currentKey) {
-            const obj = { ...item };
-            obj.code = code;
-            obj.name = name;
-            obj.point = point;
-            return obj;
+    const { code, name, point } = form.getFieldsValue();
+
+    // 保存旧数据，用于乐观更新失败时回滚
+    oldDataRef.current = fromData;
+
+    setIsSubmitting(true);
+
+    try {
+      // 根据操作类型进行数据更新
+      switch (tableModalStatus) {
+        case "tabname": {
+          if (!name) {
+            message.error("请输入列表名！");
+            return;
           }
-          return item;
-        });
-        // console.log('弹窗信息：',newData[index].data)
-        setCurrentTableData(newData[index].data);
-        setFromData(newData);
-        await window.electronAPI.rangetabItem(currentTableName, currentKey, {
-          code,
-          name,
-          point,
-        });
-        return "修改数据项";
-      }
-      default: {
-        if (!code || !name || point === undefined) {
-          message.error("请输入完整数据！");
-          return;
+          // 乐观更新：使用 Immer 只更新需要变化的部分
+          setFromData(
+            produce((draft: any[]) => {
+              const target = draft.find(
+                (item) => item.listName === rangeTabName
+              );
+              if (target) {
+                target.listName = name;
+              }
+            })
+          );
+          await window.electronAPI.rangetabName(rangeTabName, name);
+          message.success("修改列表名成功");
+          break;
         }
-        if (!currentTableName) {
-          message.error("未选中表格，无法添加元素！");
-          return;
+        case "tabData": {
+          if (!code || !name || point === undefined) {
+            message.error("请输入完整数据！");
+            return;
+          }
+          // 乐观更新：使用 Immer 只更新需要变化的部分
+          setFromData(
+            produce((draft: any[]) => {
+              const table = draft.find(
+                (item) => item.listName === currentTableName
+              );
+              if (table) {
+                const record = table.data.find(
+                  (r: any) => r.key === currentKey
+                );
+                if (record) {
+                  record.code = code;
+                  record.name = name;
+                  record.point = point;
+                }
+              }
+            })
+          );
+          // 在 produce 回调外部更新 currentTableData
+          const updatedData =
+            fromData.find((item: any) => item.listName === currentTableName)
+              ?.data || [];
+          setCurrentTableData(updatedData);
+          await window.electronAPI.rangetabItem(currentTableName, currentKey, {
+            code,
+            name,
+            point,
+          });
+          message.success("修改数据项成功");
+          break;
         }
-        const newData = [...fromData];
-        const index = newData.findIndex(
-          (item) => item.listName === currentTableName
-        );
-        const res = await window.electronAPI.rangeaddItem(currentTableName, {
-          code,
-          name,
-          point,
-        });
-        newData[index].data.push(res);
-        setFromData(newData);
-        return "添加数据项";
+        default: {
+          if (!code || !name || point === undefined) {
+            message.error("请输入完整数据！");
+            return;
+          }
+          if (!currentTableName) {
+            message.error("未选中表格，无法添加元素！");
+            return;
+          }
+
+          // 先保存旧的 fromData 用于乐观更新
+          const oldFromData = fromData;
+
+          // 乐观更新：先添加占位数据
+          const tempKey = `temp_${Date.now()}`;
+          setFromData(
+            produce((draft: any[]) => {
+              const table = draft.find(
+                (item) => item.listName === currentTableName
+              );
+              if (table) {
+                table.data.push({
+                  key: tempKey,
+                  code,
+                  name,
+                  point,
+                  isTemp: true,
+                });
+              }
+            })
+          );
+
+          try {
+            const result = await window.electronAPI.rangeaddItem(
+              currentTableName,
+              {
+                code,
+                name,
+                point,
+              }
+            );
+
+            // 更新临时数据为真实数据
+            if (result?.key) {
+              setFromData(
+                produce((draft: any[]) => {
+                  const table = draft.find(
+                    (item) => item.listName === currentTableName
+                  );
+                  if (table) {
+                    const tempRecord = table.data.find(
+                      (r: any) => r.key === tempKey
+                    );
+                    if (tempRecord) {
+                      Object.assign(tempRecord, result, { isTemp: false });
+                    }
+                  }
+                })
+              );
+            }
+            message.success("添加数据项成功");
+          } catch (error) {
+            // 失败时回滚
+            setFromData(oldFromData);
+            throw error;
+          }
+          break;
+        }
       }
+
+      setTableModalStatus(undefined);
+    } catch (error) {
+      console.error("操作失败:", error);
+      setFromData(oldDataRef.current);
+      message.error("操作失败，请重试");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
       style={{
         background: "none",
       }}
-      copyright="Powered by Luky Dog"
+      copyright="Powered by Lucky Dog"
     />
   );
 };

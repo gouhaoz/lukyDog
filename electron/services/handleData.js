@@ -8,6 +8,7 @@ let db;
 
 console.log("\u001b[?1004l");
 const { SheetBase } = require("./sheetBase.js");
+const { cache } = require("react");
 const colorList = [
   "#973b3b",
   "#a8af45",
@@ -35,6 +36,7 @@ ipcMain.handle("file:upload", async (event, fileData) => {
   }
 });
 
+//添加数据列表
 ipcMain.handle("table:add", async (event, data) => {
   const { listName, sheetName } = data;
   const worksheet = SheetBase.sheetData[sheetName];
@@ -65,8 +67,6 @@ ipcMain.handle("table:add", async (event, data) => {
       return newItem;
     });
 
-    console.log("初始化后数据：", initData);
-
     const isInclude = SheetBase.state.data.some(
       (item) => item.listName === listName
     );
@@ -86,6 +86,7 @@ ipcMain.handle("table:add", async (event, data) => {
   }
 });
 
+// 读取后端内存数据
 ipcMain.handle("data:readData", async () => {
   return SheetBase.state;
 });
@@ -127,12 +128,16 @@ ipcMain.handle("data:rangeaddItem", async (event, obj) => {
     (SheetBase.state.data.length - 1 * SheetBase.state.data.length).toString(
       32
     );
+  console.log("item元素：", SheetBase.state.data[dataIndex]);
+
   const newObj = {
     code: code,
     name: name,
     point: point,
     color:
-      colorList[SheetBase.state.data[dataIndex].data.length % colorList.length],
+      colorList[
+        (SheetBase.state.data[dataIndex].data.length + 1) % colorList.length
+      ],
     key: defaultKey,
   };
   SheetBase.state.data[dataIndex].data.push(newObj);

@@ -106,7 +106,7 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: "Luky Dog",
+  title: "Lucky Dog",
   layout: {
     locale: true,
     ...defaultSettings,
