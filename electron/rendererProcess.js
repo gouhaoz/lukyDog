@@ -10,12 +10,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   addTableData: (listName, sheetName) => {
     return ipcRenderer.invoke("table:add", { listName, sheetName });
   },
-  // openRand: (randNumber) => {
-  //     return ipcRenderer.invoke('open:rand',randNumber)
-  // },
-  // readNameList: () => {
-  //     return ipcRenderer.invoke('data:readName')
-  // },
 
   // 获取导入数据
   readData: () => {

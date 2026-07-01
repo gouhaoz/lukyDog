@@ -2,8 +2,6 @@ const { ipcMain } = require("electron");
 const dayjs = require("dayjs");
 const { SheetBase } = require("./sheetBase.js");
 
-console.log("\u001b[?1004l");
-
 let oldTabList = [];
 let cacheList = [];
 

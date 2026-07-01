@@ -6,6 +6,8 @@ const useUser = () => {
   const [fromData, setFromData] = useState<any[]>([]);
   const [excelData, setExcelData] = useState<any[]>([]);
   const [poolData, setPoolData] = useState<any[]>([]);
+  const [randNumber, setRandNumber] = useState<number>(0);
+  const [cardSelected, setCardSelected] = useState<number[]>([]);
 
   const fromNames = useMemo(() => {
     const list = fromData.map((item) => {
@@ -28,6 +30,10 @@ const useUser = () => {
     setExcelData,
     poolData,
     setPoolData,
+    randNumber,
+    setRandNumber,
+    cardSelected,
+    setCardSelected,
   };
 };
 

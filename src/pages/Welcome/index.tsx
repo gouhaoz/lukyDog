@@ -44,10 +44,7 @@ const Welcome: React.FC = () => {
   const [ruleList, setRuleList] = useState<any[]>([]);
   const [xlsxList, setXlsxList] = useState<any[]>([]);
   const [isLowChance, setIsLowChance] = useState<boolean>(false);
-  const [cardSelected, setCardSelected] = useState<number[]>([]);
 
-  // 抽奖数量
-  const [randNumber, setRandNumber] = useState<number>(0);
   const [isDraw, setIsDraw] = useState<boolean>(false);
   const {
     fromData,
@@ -57,6 +54,10 @@ const Welcome: React.FC = () => {
     setExcelData,
     poolData,
     setPoolData,
+    randNumber,
+    setRandNumber,
+    cardSelected,
+    setCardSelected,
   } = useModel("global") as any;
   //弹窗状态
   const [modalStatus, setModalStatus] = useState({
@@ -117,6 +118,7 @@ const Welcome: React.FC = () => {
     mode: "spinner" as const,
     min: 1,
     max: sum(excelData.map((item) => item.population)),
+    value: randNumber,
     onChange,
     style: { width: 150 },
   };
@@ -409,8 +411,10 @@ const Welcome: React.FC = () => {
                         src="./icons/logo.png"
                       ></Image>
                       <div className={style.headerTitle}>
-                        <h3>Lucky Dog(幸运小狗)</h3>
-                        <span>开箱即用的抽奖程序！</span>
+                        <h3 style={{ textShadow: "0 0 5px #ffffff" }}>
+                          Lucky Dog(幸运小狗)
+                        </h3>
+                        <span>多环境适应的抽奖程序！</span>
                       </div>
                     </div>
                   </Col>

@@ -14,13 +14,11 @@ const fs = require("node:fs");
 require("./services/handleData.js");
 require("./services/rand.js");
 
-console.log("\u001B[?1004l");
-
 // 根据环境获取数据目录
 const isPackaged = app.isPackaged;
 const dataDir = isPackaged
-  ? path.join(app.getPath("userData"), "data") // 生产环境：用户数据目录
-  : path.join(__dirname, "../data"); // 开发环境：项目目录
+  ? path.join(app.getPath("userData"), "data")
+  : path.join(__dirname, "../data");
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -45,13 +43,10 @@ const createWindow = async () => {
 
   // 加载对应的 URL 或文件
   if (isPackaged) {
-    // 打包后加载静态文件
-    // 使用 app.getAppPath() 获取应用根目录（在 asar 包内时就是 asar 的根目录）
     const appPath = app.getAppPath();
     console.log("🔍 app.getAppPath():", appPath);
     console.log("🔍 app.isPackaged:", app.isPackaged);
 
-    // 在 asar 包中，appPath 指向 asar 根目录，所以直接 join("dist", "index.html")
     const indexPath = path.join(appPath, "dist", "index.html");
     console.log("🔍 index.html 路径:", indexPath);
 
